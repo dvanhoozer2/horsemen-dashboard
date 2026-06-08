@@ -1024,7 +1024,7 @@ searchInput.addEventListener('input', function() {
     const matchRank  = allRows.indexOf(matched) + 1;
     const matchTotal = parseFloat(matched.dataset.total);
     if (matchRank > PLAYOFF_SPOTS) {
-      const behind = (tenthTotal - matchTotal).toFixed(0);
+      const behind = (tenthTotal - matchTotal).toFixed(2);
       searchBanner.style.display = 'block';
       searchBanner.innerHTML =
         `<strong>${matched.dataset.name}</strong> is ranked #${matchRank} — ` +
