@@ -173,9 +173,24 @@
   }
   .rank-chart { width: 100%; height: 200px; display: block; }
 
-  /* ── Mobile: hide Weeks column ── */
+  /* ── Mobile: hide Weeks and Avg/Wk columns, tighten layout ── */
   @media (max-width: 560px) {
     .hide-mobile { display: none; }
+
+    /* Tighter cell padding on small screens */
+    td, thead th { padding: 10px 8px; }
+
+    /* Let the player name column absorb extra space */
+    .col-name { word-break: break-word; }
+
+    /* Slightly smaller rank emoji/number */
+    .col-rank { font-size: 15px; width: 40px; }
+
+    /* Slightly larger total so it's easy to read */
+    .col-total { font-size: 14px; font-weight: 600; color: var(--text); }
+
+    /* Search banner wraps nicely on small screens */
+    #search-banner { font-size: 12px; }
   }
 </style>
 </head>
@@ -210,7 +225,7 @@
         <th class="col-name">Player</th>
         <th class="col-total">Total</th>
         <th class="col-weeks hide-mobile">Weeks</th>
-        <th class="col-avg">Avg/Wk</th>
+        <th class="col-avg hide-mobile">Avg/Wk</th>
       </tr>
     </thead>
     <tbody id="leaderboard-body">
@@ -225,7 +240,7 @@
           <td class="col-name">Derek Driggers</td>
           <td class="col-total">11</td>
           <td class="col-weeks hide-mobile">3</td>
-          <td class="col-avg">3.6</td>
+          <td class="col-avg hide-mobile">3.6</td>
         </tr>
         <tr class="chart-row" id="chart-1" style="display:none">
           <td colspan="6">
@@ -244,7 +259,7 @@
           <td class="col-name">Jordan Thomas</td>
           <td class="col-total">8</td>
           <td class="col-weeks hide-mobile">2</td>
-          <td class="col-avg">4.2</td>
+          <td class="col-avg hide-mobile">4.2</td>
         </tr>
         <tr class="chart-row" id="chart-2" style="display:none">
           <td colspan="6">
@@ -263,7 +278,7 @@
           <td class="col-name">Jarrett Bailey</td>
           <td class="col-total">7</td>
           <td class="col-weeks hide-mobile">3</td>
-          <td class="col-avg">2.5</td>
+          <td class="col-avg hide-mobile">2.5</td>
         </tr>
         <tr class="chart-row" id="chart-3" style="display:none">
           <td colspan="6">
@@ -282,7 +297,7 @@
           <td class="col-name">Matt Davis</td>
           <td class="col-total">7</td>
           <td class="col-weeks hide-mobile">3</td>
-          <td class="col-avg">2.4</td>
+          <td class="col-avg hide-mobile">2.4</td>
         </tr>
         <tr class="chart-row" id="chart-4" style="display:none">
           <td colspan="6">
@@ -301,7 +316,7 @@
           <td class="col-name">Drew Van Hoozer</td>
           <td class="col-total">7</td>
           <td class="col-weeks hide-mobile">2</td>
-          <td class="col-avg">3.3</td>
+          <td class="col-avg hide-mobile">3.3</td>
         </tr>
         <tr class="chart-row" id="chart-5" style="display:none">
           <td colspan="6">
@@ -320,7 +335,7 @@
           <td class="col-name">Caleb Egan</td>
           <td class="col-total">5</td>
           <td class="col-weeks hide-mobile">3</td>
-          <td class="col-avg">1.8</td>
+          <td class="col-avg hide-mobile">1.8</td>
         </tr>
         <tr class="chart-row" id="chart-6" style="display:none">
           <td colspan="6">
@@ -339,7 +354,7 @@
           <td class="col-name">Randall Hornbaker</td>
           <td class="col-total">5</td>
           <td class="col-weeks hide-mobile">3</td>
-          <td class="col-avg">1.7</td>
+          <td class="col-avg hide-mobile">1.7</td>
         </tr>
         <tr class="chart-row" id="chart-7" style="display:none">
           <td colspan="6">
@@ -358,7 +373,7 @@
           <td class="col-name">Andrew Schroeder</td>
           <td class="col-total">5</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">5.1</td>
+          <td class="col-avg hide-mobile">5.1</td>
         </tr>
         <tr class="chart-row" id="chart-8" style="display:none">
           <td colspan="6">
@@ -377,7 +392,7 @@
           <td class="col-name">Steven May</td>
           <td class="col-total">5</td>
           <td class="col-weeks hide-mobile">2</td>
-          <td class="col-avg">2.3</td>
+          <td class="col-avg hide-mobile">2.3</td>
         </tr>
         <tr class="chart-row" id="chart-9" style="display:none">
           <td colspan="6">
@@ -396,7 +411,7 @@
           <td class="col-name">Mike Gorman</td>
           <td class="col-total">4</td>
           <td class="col-weeks hide-mobile">3</td>
-          <td class="col-avg">1.3</td>
+          <td class="col-avg hide-mobile">1.3</td>
         </tr>
         <tr class="chart-row" id="chart-10" style="display:none">
           <td colspan="6">
@@ -415,7 +430,7 @@
           <td class="col-name">Dustin Crider</td>
           <td class="col-total">4</td>
           <td class="col-weeks hide-mobile">3</td>
-          <td class="col-avg">1.2</td>
+          <td class="col-avg hide-mobile">1.2</td>
         </tr>
         <tr class="chart-row" id="chart-11" style="display:none">
           <td colspan="6">
@@ -434,7 +449,7 @@
           <td class="col-name">Jeremy Shrum</td>
           <td class="col-total">4</td>
           <td class="col-weeks hide-mobile">3</td>
-          <td class="col-avg">1.2</td>
+          <td class="col-avg hide-mobile">1.2</td>
         </tr>
         <tr class="chart-row" id="chart-12" style="display:none">
           <td colspan="6">
@@ -453,7 +468,7 @@
           <td class="col-name">Coby Gawlik</td>
           <td class="col-total">3</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">3.0</td>
+          <td class="col-avg hide-mobile">3.0</td>
         </tr>
         <tr class="chart-row" id="chart-13" style="display:none">
           <td colspan="6">
@@ -472,7 +487,7 @@
           <td class="col-name">Dylan Thompson</td>
           <td class="col-total">3</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">2.8</td>
+          <td class="col-avg hide-mobile">2.8</td>
         </tr>
         <tr class="chart-row" id="chart-14" style="display:none">
           <td colspan="6">
@@ -491,7 +506,7 @@
           <td class="col-name">JJ Blea</td>
           <td class="col-total">3</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">2.5</td>
+          <td class="col-avg hide-mobile">2.5</td>
         </tr>
         <tr class="chart-row" id="chart-15" style="display:none">
           <td colspan="6">
@@ -510,7 +525,7 @@
           <td class="col-name">Ryckur Schuttler</td>
           <td class="col-total">2</td>
           <td class="col-weeks hide-mobile">2</td>
-          <td class="col-avg">1.2</td>
+          <td class="col-avg hide-mobile">1.2</td>
         </tr>
         <tr class="chart-row" id="chart-16" style="display:none">
           <td colspan="6">
@@ -529,7 +544,7 @@
           <td class="col-name">Todd Bryan</td>
           <td class="col-total">2</td>
           <td class="col-weeks hide-mobile">2</td>
-          <td class="col-avg">1.1</td>
+          <td class="col-avg hide-mobile">1.1</td>
         </tr>
         <tr class="chart-row" id="chart-17" style="display:none">
           <td colspan="6">
@@ -548,7 +563,7 @@
           <td class="col-name">Colby White</td>
           <td class="col-total">2</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">1.9</td>
+          <td class="col-avg hide-mobile">1.9</td>
         </tr>
         <tr class="chart-row" id="chart-18" style="display:none">
           <td colspan="6">
@@ -567,7 +582,7 @@
           <td class="col-name">Colby White</td>
           <td class="col-total">2</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">1.9</td>
+          <td class="col-avg hide-mobile">1.9</td>
         </tr>
         <tr class="chart-row" id="chart-19" style="display:none">
           <td colspan="6">
@@ -586,7 +601,7 @@
           <td class="col-name">Austin McCray</td>
           <td class="col-total">2</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">1.9</td>
+          <td class="col-avg hide-mobile">1.9</td>
         </tr>
         <tr class="chart-row" id="chart-20" style="display:none">
           <td colspan="6">
@@ -605,7 +620,7 @@
           <td class="col-name">Ed Marx</td>
           <td class="col-total">2</td>
           <td class="col-weeks hide-mobile">3</td>
-          <td class="col-avg">0.5</td>
+          <td class="col-avg hide-mobile">0.5</td>
         </tr>
         <tr class="chart-row" id="chart-21" style="display:none">
           <td colspan="6">
@@ -624,7 +639,7 @@
           <td class="col-name">Nick Wiezbenski</td>
           <td class="col-total">1</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">1.1</td>
+          <td class="col-avg hide-mobile">1.1</td>
         </tr>
         <tr class="chart-row" id="chart-22" style="display:none">
           <td colspan="6">
@@ -643,7 +658,7 @@
           <td class="col-name">Chris Young</td>
           <td class="col-total">1</td>
           <td class="col-weeks hide-mobile">2</td>
-          <td class="col-avg">0.5</td>
+          <td class="col-avg hide-mobile">0.5</td>
         </tr>
         <tr class="chart-row" id="chart-23" style="display:none">
           <td colspan="6">
@@ -662,7 +677,7 @@
           <td class="col-name">Josh Reyna</td>
           <td class="col-total">1</td>
           <td class="col-weeks hide-mobile">2</td>
-          <td class="col-avg">0.5</td>
+          <td class="col-avg hide-mobile">0.5</td>
         </tr>
         <tr class="chart-row" id="chart-24" style="display:none">
           <td colspan="6">
@@ -681,7 +696,7 @@
           <td class="col-name">Avery Edwards</td>
           <td class="col-total">1</td>
           <td class="col-weeks hide-mobile">2</td>
-          <td class="col-avg">0.5</td>
+          <td class="col-avg hide-mobile">0.5</td>
         </tr>
         <tr class="chart-row" id="chart-25" style="display:none">
           <td colspan="6">
@@ -700,7 +715,7 @@
           <td class="col-name">Jon Heger</td>
           <td class="col-total">1</td>
           <td class="col-weeks hide-mobile">2</td>
-          <td class="col-avg">0.5</td>
+          <td class="col-avg hide-mobile">0.5</td>
         </tr>
         <tr class="chart-row" id="chart-26" style="display:none">
           <td colspan="6">
@@ -719,7 +734,7 @@
           <td class="col-name">Jud Rodriguez</td>
           <td class="col-total">0</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">0.5</td>
+          <td class="col-avg hide-mobile">0.5</td>
         </tr>
         <tr class="chart-row" id="chart-27" style="display:none">
           <td colspan="6">
@@ -738,7 +753,7 @@
           <td class="col-name">Mike Wilson</td>
           <td class="col-total">0</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">0.5</td>
+          <td class="col-avg hide-mobile">0.5</td>
         </tr>
         <tr class="chart-row" id="chart-28" style="display:none">
           <td colspan="6">
@@ -757,7 +772,7 @@
           <td class="col-name">Jack Turnage</td>
           <td class="col-total">0</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">0.5</td>
+          <td class="col-avg hide-mobile">0.5</td>
         </tr>
         <tr class="chart-row" id="chart-29" style="display:none">
           <td colspan="6">
@@ -776,7 +791,7 @@
           <td class="col-name">Mike Sofia</td>
           <td class="col-total">0</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">0.5</td>
+          <td class="col-avg hide-mobile">0.5</td>
         </tr>
         <tr class="chart-row" id="chart-30" style="display:none">
           <td colspan="6">
@@ -795,7 +810,7 @@
           <td class="col-name">Hunter Brown</td>
           <td class="col-total">0</td>
           <td class="col-weeks hide-mobile">1</td>
-          <td class="col-avg">0.5</td>
+          <td class="col-avg hide-mobile">0.5</td>
         </tr>
         <tr class="chart-row" id="chart-31" style="display:none">
           <td colspan="6">
