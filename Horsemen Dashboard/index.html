@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Season 10 Leaderboard</title>
+<style>
+  /* ── Design tokens ── */
+  :root {
+    --bg:        #0e1116;
+    --panel:     #161b22;
+    --panel-2:   #1d232c;
+    --text:      #e6edf3;
+    --muted:     #8b949e;
+    --border:    #2a313c;
+    --gold:      #f5c518;
+    --gold-soft: rgba(245, 197, 24, 0.12);
+    --gold-edge: rgba(245, 197, 24, 0.45);
+    --accent:    #4ea1ff;
+    --up:        #3fb950;
+    --down:      #f85149;
+    --radius:    10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 24px 16px 60px;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    max-width: 860px;
+    margin: 0 auto 28px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .page-header h1 {
+    font-size: clamp(22px, 5vw, 32px);
+    font-weight: 700;
+    letter-spacing: -.02em;
+  }
+  .meta {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* ── Search ── */
+  .search-wrap {
+    max-width: 860px;
+    margin: 0 auto 16px;
+  }
+  #search {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  #search:focus { border-color: var(--accent); }
+  #search::placeholder { color: var(--muted); }
+
+  /* Banner shown when a player outside top-10 is searched */
+  #search-banner {
+    display: none;
+    margin-top: 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  #search-banner strong { color: var(--text); }
+
+  /* ── Table panel ── */
+  .table-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead th {
+    background: var(--panel-2);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  thead th.col-total,
+  thead th.col-avg  { text-align: right; }
+
+  /* ── Table rows ── */
+  .player-row {
+    cursor: pointer;
+    transition: background .12s;
+    border-bottom: 1px solid var(--border);
+  }
+  .player-row:last-of-type { border-bottom: none; }
+  .player-row:hover { background: var(--panel-2); }
+
+  /* Gold highlight for playoff spots */
+  .player-row.gold-row {
+    border-left: 3px inset var(--gold-edge);
+    background: var(--gold-soft);
+  }
+  .player-row.gold-row:hover { background: rgba(245,197,24,.18); }
+
+  /* Row that was expanded via search or click */
+  .player-row.highlighted {
+    outline: 1px solid var(--accent);
+    outline-offset: -1px;
+  }
+
+  td {
+    padding: 11px 14px;
+    vertical-align: middle;
+  }
+  .col-rank  { font-size: 17px; width: 52px; }
+  .col-move  { width: 68px; }
+  .col-total, .col-avg { text-align: right; }
+  .col-weeks { text-align: center; color: var(--muted); font-size: 13px; }
+  .col-avg   { color: var(--muted); font-size: 13px; }
+
+  /* Row hidden by search filter */
+  .player-row.hidden, .chart-row.hidden { display: none !important; }
+
+  /* ── Movement pills ── */
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 2px 7px;
+    white-space: nowrap;
+  }
+  .pill-up   { background: rgba(63,185,80,.15);  color: var(--up); }
+  .pill-down { background: rgba(248,81,73,.15);  color: var(--down); }
+  .pill-same { background: var(--panel-2); color: var(--muted); }
+  .pill-new  { background: rgba(78,161,255,.15); color: var(--accent); }
+
+  /* ── Expanded chart row ── */
+  .chart-row td { padding: 0; border-bottom: 1px solid var(--border); }
+  .chart-wrap {
+    padding: 16px 20px 20px;
+    background: var(--panel-2);
+  }
+  .rank-chart { width: 100%; height: 200px; display: block; }
+
+  /* ── Mobile: hide Weeks and Avg/Wk columns, tighten layout ── */
+  @media (max-width: 560px) {
+    .hide-mobile { display: none; }
+
+    /* Tighter cell padding on small screens */
+    td, thead th { padding: 10px 8px; }
+
+    /* Let the player name column absorb extra space */
+    .col-name { word-break: break-word; }
+
+    /* Slightly smaller rank emoji/number */
+    .col-rank { font-size: 15px; width: 40px; }
+
+    /* Slightly larger total so it's easy to read */
+    .col-total { font-size: 14px; font-weight: 600; color: var(--text); }
+
+    /* Search banner wraps nicely on small screens */
+    #search-banner { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     PAGE HEADER
+══════════════════════════════════════════════ -->
+<header class="page-header">
+  <p class="eyebrow">Derby Standings</p>
+  <h1>Season 10 Leaderboard</h1>
+  <p class="meta">Updated June 22, 2026 &nbsp;·&nbsp; 31 players</p>
+  <p class="meta">Click on a player's name to see week by week ranking</p>
+</header>
+
+<!-- ══════════════════════════════════════════════
+     SEARCH BAR
+══════════════════════════════════════════════ -->
+<div class="search-wrap">
+  <input id="search" type="search" placeholder="Search player…" autocomplete="off">
+  <div id="search-banner"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     LEADERBOARD TABLE
+══════════════════════════════════════════════ -->
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="col-rank">Rank</th>
+        <th class="col-move">Move</th>
+        <th class="col-name">Player</th>
+        <th class="col-total">Total</th>
+        <th class="col-weeks hide-mobile">Weeks</th>
+        <th class="col-avg hide-mobile">Avg/Wk</th>
+      </tr>
+    </thead>
+    <tbody id="leaderboard-body">
+
+        <tr class="player-row gold-row"
+            data-name="Derek Driggers"
+            data-ranks='[1, 1, 1]'
+            data-color="#f5c518"
+            data-total="10.76">
+          <td class="col-rank">🥇</td>
+          <td class="col-move"><span class="pill pill-same">—</span></td>
+          <td class="col-name">Derek Driggers</td>
+          <td class="col-total">10.76</td>
+          <td class="col-weeks hide-mobile">3</td>
+          <td class="col-avg hide-mobile">3.6</td>
+        </tr>
+        <tr class="chart-row" id="chart-1" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-1"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row gold-row"
+            data-name="Jordan Thomas"
+            data-ranks='[14, 21, 2]'
+            data-color="#f5c518"
+            data-total="8.48">
+          <td class="col-rank">🥈</td>
+          <td class="col-move"><span class="pill pill-up">▲ 19</span></td>
+          <td class="col-name">Jordan Thomas</td>
+          <td class="col-total">8.48</td>
+          <td class="col-weeks hide-mobile">2</td>
+          <td class="col-avg hide-mobile">4.2</td>
+        </tr>
+        <tr class="chart-row" id="chart-2" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-2"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row gold-row"
+            data-name="Jarrett Bailey"
+            data-ranks='[9, 2, 3]'
+            data-color="#f5c518"
+            data-total="7.48">
+          <td class="col-rank">🥉</td>
+          <td class="col-move"><span class="pill pill-down">▼ 1</span></td>
+          <td class="col-name">Jarrett Bailey</td>
+          <td class="col-total">7.48</td>
+          <td class="col-weeks hide-mobile">3</td>
+          <td class="col-avg hide-mobile">2.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-3" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-3"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row gold-row"
+            data-name="Matt Davis"
+            data-ranks='[3, 3, 4]'
+            data-color="#f5c518"
+            data-total="7.279999999999999">
+          <td class="col-rank">4</td>
+          <td class="col-move"><span class="pill pill-down">▼ 1</span></td>
+          <td class="col-name">Matt Davis</td>
+          <td class="col-total">7.28</td>
+          <td class="col-weeks hide-mobile">3</td>
+          <td class="col-avg hide-mobile">2.4</td>
+        </tr>
+        <tr class="chart-row" id="chart-4" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-4"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row gold-row"
+            data-name="Drew Van Hoozer"
+            data-ranks='[13, 16, 5]'
+            data-color="#f5c518"
+            data-total="6.68">
+          <td class="col-rank">5</td>
+          <td class="col-move"><span class="pill pill-up">▲ 11</span></td>
+          <td class="col-name">Drew Van Hoozer</td>
+          <td class="col-total">6.68</td>
+          <td class="col-weeks hide-mobile">2</td>
+          <td class="col-avg hide-mobile">3.3</td>
+        </tr>
+        <tr class="chart-row" id="chart-5" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-5"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row gold-row"
+            data-name="Caleb Egan"
+            data-ranks='[15, 12, 6]'
+            data-color="#f5c518"
+            data-total="5.4799999999999995">
+          <td class="col-rank">6</td>
+          <td class="col-move"><span class="pill pill-up">▲ 6</span></td>
+          <td class="col-name">Caleb Egan</td>
+          <td class="col-total">5.48</td>
+          <td class="col-weeks hide-mobile">3</td>
+          <td class="col-avg hide-mobile">1.8</td>
+        </tr>
+        <tr class="chart-row" id="chart-6" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-6"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row gold-row"
+            data-name="Randall Hornbaker"
+            data-ranks='[16, 17, 7]'
+            data-color="#f5c518"
+            data-total="5.24">
+          <td class="col-rank">7</td>
+          <td class="col-move"><span class="pill pill-up">▲ 10</span></td>
+          <td class="col-name">Randall Hornbaker</td>
+          <td class="col-total">5.24</td>
+          <td class="col-weeks hide-mobile">3</td>
+          <td class="col-avg hide-mobile">1.7</td>
+        </tr>
+        <tr class="chart-row" id="chart-7" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-7"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row gold-row"
+            data-name="Andrew Schroeder"
+            data-ranks='[2, 4, 8]'
+            data-color="#f5c518"
+            data-total="5.1">
+          <td class="col-rank">8</td>
+          <td class="col-move"><span class="pill pill-down">▼ 4</span></td>
+          <td class="col-name">Andrew Schroeder</td>
+          <td class="col-total">5.10</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">5.1</td>
+        </tr>
+        <tr class="chart-row" id="chart-8" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-8"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row gold-row"
+            data-name="Steven May"
+            data-ranks='[null, 5, 9]'
+            data-color="#f5c518"
+            data-total="4.6">
+          <td class="col-rank">9</td>
+          <td class="col-move"><span class="pill pill-down">▼ 4</span></td>
+          <td class="col-name">Steven May</td>
+          <td class="col-total">4.60</td>
+          <td class="col-weeks hide-mobile">2</td>
+          <td class="col-avg hide-mobile">2.3</td>
+        </tr>
+        <tr class="chart-row" id="chart-9" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-9"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row gold-row"
+            data-name="Mike Gorman"
+            data-ranks='[10, 9, 10]'
+            data-color="#f5c518"
+            data-total="3.7600000000000002">
+          <td class="col-rank">10</td>
+          <td class="col-move"><span class="pill pill-down">▼ 1</span></td>
+          <td class="col-name">Mike Gorman</td>
+          <td class="col-total">3.76</td>
+          <td class="col-weeks hide-mobile">3</td>
+          <td class="col-avg hide-mobile">1.3</td>
+        </tr>
+        <tr class="chart-row" id="chart-10" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-10"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Dustin Crider"
+            data-ranks='[6, 6, 11]'
+            data-color="#4ea1ff"
+            data-total="3.62">
+          <td class="col-rank">11</td>
+          <td class="col-move"><span class="pill pill-down">▼ 5</span></td>
+          <td class="col-name">Dustin Crider</td>
+          <td class="col-total">3.62</td>
+          <td class="col-weeks hide-mobile">3</td>
+          <td class="col-avg hide-mobile">1.2</td>
+        </tr>
+        <tr class="chart-row" id="chart-11" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-11"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Jeremy Shrum"
+            data-ranks='[17, 18, 12]'
+            data-color="#4ea1ff"
+            data-total="3.52">
+          <td class="col-rank">12</td>
+          <td class="col-move"><span class="pill pill-up">▲ 6</span></td>
+          <td class="col-name">Jeremy Shrum</td>
+          <td class="col-total">3.52</td>
+          <td class="col-weeks hide-mobile">3</td>
+          <td class="col-avg hide-mobile">1.2</td>
+        </tr>
+        <tr class="chart-row" id="chart-12" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-12"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Coby Gawlik"
+            data-ranks='[null, 7, 13]'
+            data-color="#4ea1ff"
+            data-total="2.98">
+          <td class="col-rank">13</td>
+          <td class="col-move"><span class="pill pill-down">▼ 6</span></td>
+          <td class="col-name">Coby Gawlik</td>
+          <td class="col-total">2.98</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">3.0</td>
+        </tr>
+        <tr class="chart-row" id="chart-13" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-13"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Dylan Thompson"
+            data-ranks='[4, 8, 14]'
+            data-color="#4ea1ff"
+            data-total="2.8">
+          <td class="col-rank">14</td>
+          <td class="col-move"><span class="pill pill-down">▼ 6</span></td>
+          <td class="col-name">Dylan Thompson</td>
+          <td class="col-total">2.80</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">2.8</td>
+        </tr>
+        <tr class="chart-row" id="chart-14" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-14"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="JJ Blea"
+            data-ranks='[5, 10, 15]'
+            data-color="#4ea1ff"
+            data-total="2.52">
+          <td class="col-rank">15</td>
+          <td class="col-move"><span class="pill pill-down">▼ 5</span></td>
+          <td class="col-name">JJ Blea</td>
+          <td class="col-total">2.52</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">2.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-15" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-15"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Ryckur Schuttler"
+            data-ranks='[7, 11, 16]'
+            data-color="#4ea1ff"
+            data-total="2.44">
+          <td class="col-rank">16</td>
+          <td class="col-move"><span class="pill pill-down">▼ 5</span></td>
+          <td class="col-name">Ryckur Schuttler</td>
+          <td class="col-total">2.44</td>
+          <td class="col-weeks hide-mobile">2</td>
+          <td class="col-avg hide-mobile">1.2</td>
+        </tr>
+        <tr class="chart-row" id="chart-16" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-16"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Todd Bryan"
+            data-ranks='[11, 14, 17]'
+            data-color="#4ea1ff"
+            data-total="2.16">
+          <td class="col-rank">17</td>
+          <td class="col-move"><span class="pill pill-down">▼ 3</span></td>
+          <td class="col-name">Todd Bryan</td>
+          <td class="col-total">2.16</td>
+          <td class="col-weeks hide-mobile">2</td>
+          <td class="col-avg hide-mobile">1.1</td>
+        </tr>
+        <tr class="chart-row" id="chart-17" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-17"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Colby White"
+            data-ranks='[8, 13, 18]'
+            data-color="#4ea1ff"
+            data-total="1.94">
+          <td class="col-rank">18</td>
+          <td class="col-move"><span class="pill pill-up">▲ 11</span></td>
+          <td class="col-name">Colby White</td>
+          <td class="col-total">1.94</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">1.9</td>
+        </tr>
+        <tr class="chart-row" id="chart-18" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-18"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Colby White"
+            data-ranks='[null, null, 19]'
+            data-color="#4ea1ff"
+            data-total="1.94">
+          <td class="col-rank">19</td>
+          <td class="col-move"><span class="pill pill-new">NEW</span></td>
+          <td class="col-name">Colby White</td>
+          <td class="col-total">1.94</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">1.9</td>
+        </tr>
+        <tr class="chart-row" id="chart-19" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-19"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Austin McCray"
+            data-ranks='[null, null, 20]'
+            data-color="#4ea1ff"
+            data-total="1.94">
+          <td class="col-rank">20</td>
+          <td class="col-move"><span class="pill pill-new">NEW</span></td>
+          <td class="col-name">Austin McCray</td>
+          <td class="col-total">1.94</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">1.9</td>
+        </tr>
+        <tr class="chart-row" id="chart-20" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-20"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Ed Marx"
+            data-ranks='[18, 19, 21]'
+            data-color="#4ea1ff"
+            data-total="1.5">
+          <td class="col-rank">21</td>
+          <td class="col-move"><span class="pill pill-down">▼ 2</span></td>
+          <td class="col-name">Ed Marx</td>
+          <td class="col-total">1.50</td>
+          <td class="col-weeks hide-mobile">3</td>
+          <td class="col-avg hide-mobile">0.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-21" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-21"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Nick Wiezbenski"
+            data-ranks='[12, 15, 22]'
+            data-color="#4ea1ff"
+            data-total="1.08">
+          <td class="col-rank">22</td>
+          <td class="col-move"><span class="pill pill-down">▼ 7</span></td>
+          <td class="col-name">Nick Wiezbenski</td>
+          <td class="col-total">1.08</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">1.1</td>
+        </tr>
+        <tr class="chart-row" id="chart-22" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-22"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Chris Young"
+            data-ranks='[19, 22, 23]'
+            data-color="#4ea1ff"
+            data-total="1.0">
+          <td class="col-rank">23</td>
+          <td class="col-move"><span class="pill pill-down">▼ 1</span></td>
+          <td class="col-name">Chris Young</td>
+          <td class="col-total">1.00</td>
+          <td class="col-weeks hide-mobile">2</td>
+          <td class="col-avg hide-mobile">0.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-23" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-23"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Josh Reyna"
+            data-ranks='[20, 23, 24]'
+            data-color="#4ea1ff"
+            data-total="1.0">
+          <td class="col-rank">24</td>
+          <td class="col-move"><span class="pill pill-down">▼ 1</span></td>
+          <td class="col-name">Josh Reyna</td>
+          <td class="col-total">1.00</td>
+          <td class="col-weeks hide-mobile">2</td>
+          <td class="col-avg hide-mobile">0.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-24" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-24"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Avery Edwards"
+            data-ranks='[null, 24, 25]'
+            data-color="#4ea1ff"
+            data-total="1.0">
+          <td class="col-rank">25</td>
+          <td class="col-move"><span class="pill pill-down">▼ 1</span></td>
+          <td class="col-name">Avery Edwards</td>
+          <td class="col-total">1.00</td>
+          <td class="col-weeks hide-mobile">2</td>
+          <td class="col-avg hide-mobile">0.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-25" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-25"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Jon Heger"
+            data-ranks='[21, 20, 26]'
+            data-color="#4ea1ff"
+            data-total="1.0">
+          <td class="col-rank">26</td>
+          <td class="col-move"><span class="pill pill-down">▼ 6</span></td>
+          <td class="col-name">Jon Heger</td>
+          <td class="col-total">1.00</td>
+          <td class="col-weeks hide-mobile">2</td>
+          <td class="col-avg hide-mobile">0.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-26" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-26"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Jud Rodriguez"
+            data-ranks='[22, 25, 27]'
+            data-color="#4ea1ff"
+            data-total="0.5">
+          <td class="col-rank">27</td>
+          <td class="col-move"><span class="pill pill-down">▼ 2</span></td>
+          <td class="col-name">Jud Rodriguez</td>
+          <td class="col-total">0.50</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">0.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-27" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-27"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Mike Wilson"
+            data-ranks='[23, 26, 28]'
+            data-color="#4ea1ff"
+            data-total="0.5">
+          <td class="col-rank">28</td>
+          <td class="col-move"><span class="pill pill-down">▼ 2</span></td>
+          <td class="col-name">Mike Wilson</td>
+          <td class="col-total">0.50</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">0.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-28" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-28"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Jack Turnage"
+            data-ranks='[null, 27, 29]'
+            data-color="#4ea1ff"
+            data-total="0.5">
+          <td class="col-rank">29</td>
+          <td class="col-move"><span class="pill pill-down">▼ 2</span></td>
+          <td class="col-name">Jack Turnage</td>
+          <td class="col-total">0.50</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">0.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-29" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-29"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Mike Sofia"
+            data-ranks='[null, 28, 30]'
+            data-color="#4ea1ff"
+            data-total="0.5">
+          <td class="col-rank">30</td>
+          <td class="col-move"><span class="pill pill-down">▼ 2</span></td>
+          <td class="col-name">Mike Sofia</td>
+          <td class="col-total">0.50</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">0.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-30" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-30"></canvas>
+            </div>
+          </td>
+        </tr>
+        <tr class="player-row "
+            data-name="Hunter Brown"
+            data-ranks='[null, null, 31]'
+            data-color="#4ea1ff"
+            data-total="0.5">
+          <td class="col-rank">31</td>
+          <td class="col-move"><span class="pill pill-new">NEW</span></td>
+          <td class="col-name">Hunter Brown</td>
+          <td class="col-total">0.50</td>
+          <td class="col-weeks hide-mobile">1</td>
+          <td class="col-avg hide-mobile">0.5</td>
+        </tr>
+        <tr class="chart-row" id="chart-31" style="display:none">
+          <td colspan="6">
+            <div class="chart-wrap">
+              <canvas class="rank-chart" id="canvas-31"></canvas>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT — search, row expansion, charts
+══════════════════════════════════════════════ -->
+<script>
+// Week labels injected from Python
+const WEEK_LABELS   = ["Week 1", "Week 2", "Week 3"];
+const PLAYOFF_SPOTS = 10;
+
+// ── Utility: find the 10th-place total points ────────────────────────
+function getTenthPlaceTotal() {
+  const rows = [...document.querySelectorAll('.player-row')];
+  const row10 = rows[PLAYOFF_SPOTS - 1];
+  return row10 ? parseFloat(row10.dataset.total) : 0;
+}
+
+// ── Chart drawing (pure Canvas, no dependencies) ─────────────────────
+function drawChart(canvasEl, ranks, color) {
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvasEl.offsetWidth  || 800;
+  const H   = canvasEl.offsetHeight || 200;
+
+  canvasEl.width  = W * dpr;
+  canvasEl.height = H * dpr;
+
+  const ctx = canvasEl.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Filter to weeks where the player has a rank
+  const dataPoints = [];
+  for (let i = 0; i < ranks.length; i++) {
+    if (ranks[i] !== null) {
+      dataPoints.push({ weekIdx: i, rank: ranks[i] });
+    }
+  }
+
+  if (dataPoints.length < 1) return;
+
+  // Axis bounds — rank 1 at top, worst rank at bottom
+  const allRanks = dataPoints.map(d => d.rank);
+  const minRank  = 1;
+  const maxRank  = Math.max(...allRanks, PLAYOFF_SPOTS);
+
+  // Chart padding
+  const PAD = { top: 28, right: 24, bottom: 36, left: 32 };
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top  - PAD.bottom;
+
+  // Convert data point → pixel position
+  // Rank 1 = top of chart (low Y), higher rank number = lower on chart
+  function toX(weekIdx) {
+    const totalWeeks = WEEK_LABELS.length - 1 || 1;
+    return PAD.left + (weekIdx / totalWeeks) * chartW;
+  }
+  function toY(rank) {
+    const span = maxRank - minRank || 1;
+    return PAD.top + ((rank - minRank) / span) * chartH;
+  }
+
+  // ── Draw subtle horizontal grid lines ──
+  ctx.strokeStyle = 'rgba(42,49,60,0.8)';
+  ctx.lineWidth   = 1;
+  for (let r = minRank; r <= maxRank; r++) {
+    const y = toY(r);
+    ctx.beginPath();
+    ctx.moveTo(PAD.left, y);
+    ctx.lineTo(PAD.left + chartW, y);
+    ctx.stroke();
+  }
+
+  // ── Draw X axis labels (Week N) ──
+  ctx.fillStyle  = 'rgba(139,148,158,0.8)';
+  ctx.font       = '10px -apple-system, sans-serif';
+  ctx.textAlign  = 'center';
+  dataPoints.forEach(d => {
+    const x = toX(d.weekIdx);
+    ctx.fillText(WEEK_LABELS[d.weekIdx], x, H - PAD.bottom + 14);
+  });
+
+  // ── Draw the trend line ──
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = 2.5;
+  ctx.lineJoin    = 'round';
+  ctx.beginPath();
+  dataPoints.forEach((d, i) => {
+    const x = toX(d.weekIdx);
+    const y = toY(d.rank);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // ── Draw data point dots + rank labels ──
+  dataPoints.forEach((d, i) => {
+    const x    = toX(d.weekIdx);
+    const y    = toY(d.rank);
+    const next = dataPoints[i + 1];
+
+    // Dot
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle   = color;
+    ctx.fill();
+    ctx.strokeStyle = '#0e1116';
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
+
+    // Rank label: place ABOVE the dot if the next rank is worse (higher number),
+    // or if it's the last point; otherwise place BELOW.
+    // Always place rank label above the dot
+    ctx.fillStyle  = 'rgba(230,237,243,0.9)';
+    ctx.font       = 'bold 11px -apple-system, sans-serif';
+    ctx.textAlign  = 'center';
+    ctx.fillText(d.rank, x, y - 10);
+  });
+}
+
+// ── Row click: toggle chart expansion ───────────────────────────────
+let openChartId = null;
+
+document.getElementById('leaderboard-body').addEventListener('click', function(e) {
+  const row = e.target.closest('.player-row');
+  if (!row) return;
+
+  const rank      = [...document.querySelectorAll('.player-row')].indexOf(row) + 1;
+  const chartRow  = document.getElementById('chart-' + rank);
+  if (!chartRow) return;
+
+  // Close whichever chart is currently open (unless it's this one)
+  if (openChartId && openChartId !== rank) {
+    const prev = document.getElementById('chart-' + openChartId);
+    if (prev) prev.style.display = 'none';
+  }
+
+  if (chartRow.style.display === 'none' || chartRow.style.display === '') {
+    chartRow.style.display = 'table-row';
+    openChartId = rank;
+
+    // Draw the chart on the next frame so the canvas has layout dimensions
+    requestAnimationFrame(() => {
+      const canvas = document.getElementById('canvas-' + rank);
+      const ranks  = JSON.parse(row.dataset.ranks);
+      const color  = row.dataset.color;
+      drawChart(canvas, ranks, color);
+    });
+  } else {
+    chartRow.style.display = 'none';
+    openChartId = null;
+  }
+});
+
+// ── Search / filter logic ────────────────────────────────────────────
+const searchInput  = document.getElementById('search');
+const searchBanner = document.getElementById('search-banner');
+
+searchInput.addEventListener('input', function() {
+  const query   = this.value.trim().toLowerCase();
+  const allRows = [...document.querySelectorAll('.player-row')];
+
+  // Close any open chart when the query changes
+  if (openChartId) {
+    const prev = document.getElementById('chart-' + openChartId);
+    if (prev) prev.style.display = 'none';
+    openChartId = null;
+  }
+
+  if (!query) {
+    // Show everything, clear banner
+    allRows.forEach(r => r.classList.remove('hidden', 'highlighted'));
+    document.querySelectorAll('.chart-row').forEach(r => r.classList.remove('hidden'));
+    searchBanner.style.display = 'none';
+    return;
+  }
+
+  // Find matched player
+  const matched = allRows.find(r =>
+    r.dataset.name.toLowerCase().includes(query)
+  );
+
+  const tenthTotal = getTenthPlaceTotal();
+
+  allRows.forEach((row, i) => {
+    const rank       = i + 1;   // rows are in rank order
+    const isPlayoff  = rank <= PLAYOFF_SPOTS;
+    const isMatched  = matched && row === matched;
+    const chartRow   = document.getElementById('chart-' + rank);
+
+    if (isPlayoff || isMatched) {
+      row.classList.remove('hidden');
+      row.classList.toggle('highlighted', isMatched && !isPlayoff);
+      if (chartRow) chartRow.classList.remove('hidden');
+    } else {
+      row.classList.add('hidden');
+      if (chartRow) chartRow.classList.add('hidden');
+    }
+  });
+
+  // Show banner if match is outside top 10
+  if (matched) {
+    const matchRank  = allRows.indexOf(matched) + 1;
+    const matchTotal = parseFloat(matched.dataset.total);
+    if (matchRank > PLAYOFF_SPOTS) {
+      const behind = (tenthTotal - matchTotal).toFixed(2);
+      searchBanner.style.display = 'block';
+      searchBanner.innerHTML =
+        `<strong>${matched.dataset.name}</strong> is ranked #${matchRank} — ` +
+        `<strong>${behind}</strong> pts behind the #${PLAYOFF_SPOTS} playoff spot.`;
+    } else {
+      searchBanner.style.display = 'none';
+    }
+  } else {
+    searchBanner.style.display = 'none';
+  }
+});
+</script>
+
+</body>
+</html>
