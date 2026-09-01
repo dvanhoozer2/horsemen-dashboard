@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Season 10 Leaderboard</title>
 <style>
-  /* ── Design tokens ── */
+  /* ── Design tokens — dark (default) ── */
   :root {
     --bg:        #0e1116;
     --panel:     #161b22;
@@ -20,6 +20,22 @@
     --up:        #3fb950;
     --down:      #f85149;
     --radius:    10px;
+  }
+
+  /* ── Light theme tokens ── */
+  :root.light {
+    --bg:        #f4f6f9;
+    --panel:     #ffffff;
+    --panel-2:   #eef0f4;
+    --text:      #1a1f2e;
+    --muted:     #6b7280;
+    --border:    #d1d5db;
+    --gold:      #b8860b;
+    --gold-soft: rgba(184, 134, 11, 0.10);
+    --gold-edge: rgba(184, 134, 11, 0.40);
+    --accent:    #1d6fd8;
+    --up:        #16a34a;
+    --down:      #dc2626;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -173,6 +189,23 @@
   }
   .rank-chart { width: 100%; height: 200px; display: block; }
 
+  /* ── Theme toggle button ── */
+  #theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 6px 12px;
+    z-index: 100;
+    transition: background .15s, color .15s;
+  }
+  #theme-toggle:hover { color: var(--text); background: var(--panel-2); }
+
   /* ── Mobile: hide Weeks and Avg/Wk columns, tighten layout ── */
   @media (max-width: 560px) {
     .hide-mobile { display: none; }
@@ -196,13 +229,15 @@
 </head>
 <body>
 
+<button id="theme-toggle" onclick="toggleTheme()">☀ Light</button>
+
 <!-- ══════════════════════════════════════════════
      PAGE HEADER
 ══════════════════════════════════════════════ -->
 <header class="page-header">
   <p class="eyebrow">Derby Standings</p>
   <h1>Season 10 Leaderboard</h1>
-  <p class="meta">Updated August 21, 2026 &nbsp;·&nbsp; 38 players</p>
+  <p class="meta">Updated September 01, 2026 &nbsp;·&nbsp; 38 players</p>
   <p class="meta">Click on a player's name to see week by week ranking</p>
 </header>
 
@@ -961,6 +996,21 @@
      JAVASCRIPT — search, row expansion, charts
 ══════════════════════════════════════════════ -->
 <script>
+// ── Theme toggle ────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light');
+  document.getElementById('theme-toggle').textContent = isLight ? '☾ Dark' : '☀ Light';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+// Restore saved theme on load
+(function() {
+  if (localStorage.getItem('theme') === 'light') {
+    document.documentElement.classList.add('light');
+    document.getElementById('theme-toggle').textContent = '☾ Dark';
+  }
+})();
+
 // Week labels injected from Python
 const WEEK_LABELS   = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6", "Week 7", "Week 8", "Week 9"];
 const PLAYOFF_SPOTS = 10;
