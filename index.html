@@ -27,14 +27,14 @@
     --bg:        #f4f6f9;
     --panel:     #ffffff;
     --panel-2:   #eef0f4;
-    --text:      #1a1f2e;
-    --muted:     #6b7280;
+    --text:      #111827;
+    --muted:     #4b5563;
     --border:    #d1d5db;
-    --gold:      #b8860b;
-    --gold-soft: rgba(184, 134, 11, 0.10);
-    --gold-edge: rgba(184, 134, 11, 0.40);
+    --gold:      #92700a;
+    --gold-soft: rgba(146, 112, 10, 0.10);
+    --gold-edge: rgba(146, 112, 10, 0.40);
     --accent:    #1d6fd8;
-    --up:        #16a34a;
+    --up:        #15803d;
     --down:      #dc2626;
   }
 
@@ -229,7 +229,7 @@
 </head>
 <body>
 
-<button id="theme-toggle" onclick="toggleTheme()">☀ Light</button>
+<button id="theme-toggle" onclick="toggleTheme()">☾ Dark</button>
 
 <!-- ══════════════════════════════════════════════
      PAGE HEADER
@@ -1003,9 +1003,10 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
 }
 
-// Restore saved theme on load
+// Restore saved theme on load — default is light
 (function() {
-  if (localStorage.getItem('theme') === 'light') {
+  const saved = localStorage.getItem('theme');
+  if (saved !== 'dark') {
     document.documentElement.classList.add('light');
     document.getElementById('theme-toggle').textContent = '☾ Dark';
   }
@@ -1065,8 +1066,14 @@ function drawChart(canvasEl, ranks, color) {
     return PAD.top + ((rank - minRank) / span) * chartH;
   }
 
+  // Detect light/dark mode for chart colors
+  const isLight  = document.documentElement.classList.contains('light');
+  const gridColor  = isLight ? 'rgba(180,185,195,0.6)' : 'rgba(42,49,60,0.8)';
+  const labelColor = isLight ? 'rgba(30,30,30,0.85)'   : 'rgba(230,237,243,0.9)';
+  const axisColor  = isLight ? 'rgba(100,110,125,0.8)' : 'rgba(139,148,158,0.8)';
+
   // ── Draw subtle horizontal grid lines ──
-  ctx.strokeStyle = 'rgba(42,49,60,0.8)';
+  ctx.strokeStyle = gridColor;
   ctx.lineWidth   = 1;
   for (let r = minRank; r <= maxRank; r++) {
     const y = toY(r);
@@ -1077,7 +1084,7 @@ function drawChart(canvasEl, ranks, color) {
   }
 
   // ── Draw X axis labels (Week N) ──
-  ctx.fillStyle  = 'rgba(139,148,158,0.8)';
+  ctx.fillStyle  = axisColor;
   ctx.font       = '10px -apple-system, sans-serif';
   ctx.textAlign  = 'center';
   dataPoints.forEach(d => {
@@ -1115,7 +1122,7 @@ function drawChart(canvasEl, ranks, color) {
     // Rank label: place ABOVE the dot if the next rank is worse (higher number),
     // or if it's the last point; otherwise place BELOW.
     // Always place rank label above the dot
-    ctx.fillStyle  = 'rgba(230,237,243,0.9)';
+    ctx.fillStyle  = labelColor;
     ctx.font       = 'bold 11px -apple-system, sans-serif';
     ctx.textAlign  = 'center';
     ctx.fillText(d.rank, x, y - 10);
